@@ -1,0 +1,41 @@
+# IDE (Android Studio / IntelliJ)
+*.iml
+.gradle/
+/.idea/caches/
+/.idea/libraries/
+/.idea/modules.xml
+/.idea/workspace.xml
+/.idea/navEditor.xml
+/.idea/assetWizardSettings.xml
+
+# Local Configuration
+local.properties
+
+# Build & Outputs
+build/
+*/build/
+app/build/
+/captures/
+.externalNativeBuild/
+.cxx/
+*.apk
+*.ap_
+*.aab
+*.dex
+*.class
+
+# Security & Credentials
+*.jks
+*.keystore
+keystore.properties
+google-services.json
+apikey.properties
+
+# OS-specific files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+Thumbs.db
+ehthumbs.db
