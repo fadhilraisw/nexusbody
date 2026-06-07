@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.room.Room
 import com.rais.nexusbody.core.database.NexusBodyDatabase
 import com.rais.nexusbody.data.local.dao.HealthDao
+import com.rais.nexusbody.data.local.dao.MedicationDao
 import com.rais.nexusbody.data.local.dao.NutritionDao
 import com.rais.nexusbody.data.local.dao.UserDao
 import com.rais.nexusbody.data.local.dao.WorkoutDao
@@ -39,4 +40,7 @@ object DatabaseModule {
 
     @Provides
     fun provideWorkoutDao(database: NexusBodyDatabase): WorkoutDao = database.workoutDao()
+
+    @Provides
+    fun provideMedicationDao(database: NexusBodyDatabase): MedicationDao = database.medicationDao()
 }

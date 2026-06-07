@@ -12,6 +12,9 @@ interface HealthDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertAssessment(assessment: HealthAssessmentEntity)
 
+    @Query("SELECT * FROM health_assessments WHERE userId = :userId AND dateStr = :dateStr LIMIT 1")
+    suspend fun getAssessmentByDate(userId: String, dateStr: String): HealthAssessmentEntity?
+
     @Query("SELECT * FROM health_assessments WHERE userId = :userId ORDER BY timestamp DESC")
     fun getAssessmentsFlow(userId: String): Flow<List<HealthAssessmentEntity>>
 

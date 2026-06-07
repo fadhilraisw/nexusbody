@@ -27,7 +27,9 @@ import com.rais.nexusbody.feature.dashboard.DashboardUiState
 import com.rais.nexusbody.feature.workout.ui.WorkoutLogScreen
 import com.rais.nexusbody.feature.nutrition.ui.NutritionLogScreen
 import com.rais.nexusbody.feature.health.ui.HealthAssessmentScreen
-import com.rais.nexusbody.feature.gamification.ui.QuestForgerScreen
+import com.rais.nexusbody.data.local.entity.HealthAssessmentEntity
+import com.rais.nexusbody.data.local.entity.MedicationEntity
+import com.rais.nexusbody.data.local.entity.WorkoutSessionEntity
 import kotlinx.coroutines.launch
 
 val textprimary = Color(0xFFFFFFFF)
@@ -134,21 +136,31 @@ private fun DashboardContent(uiState: DashboardUiState) {
     ) {
         item { OverallLevelHeader(uiState.rank, uiState.streak) }
 
-        // data di kosongkan
+        // Medication Reminder Section
         item {
+            val activeMeds = uiState.activeMedications
             PremiumGlassCard(modifier = Modifier.fillMaxWidth()) {
                 Row(modifier = Modifier.padding(20.dp), verticalAlignment = Alignment.CenterVertically) {
                     Column(Modifier.weight(1f)) {
                         Text("medication reminder", color = textmuted, fontSize = 11.sp)
-                        Text("belum ada jadwal obat aktif", color = textprimary, fontSize = 14.sp)
+                        if (activeMeds.isEmpty()) {
+                            Text("belum ada jadwal obat aktif", color = textprimary, fontSize = 14.sp)
+                        } else {
+                            activeMeds.forEach { med ->
+                                Text("${med.name} (${med.scheduledTimes.joinToString(", ")})", color = textprimary, fontSize = 14.sp, fontWeight = FontWeight.Bold)
+                            }
+                        }
+                    }
+                    if (activeMeds.isNotEmpty()) {
+                        Icon(Icons.Default.Notifications, null, tint = premiumaccent, modifier = Modifier.size(20.dp))
                     }
                 }
             }
         }
 
-        item { HealthBriefSection() }
-        item { NutritionBriefSection() }
-        item { WorkoutBriefSection() }
+        item { HealthBriefSection(uiState.latestHealth) }
+        item { NutritionBriefSection(uiState.totalCalories) }
+        item { WorkoutBriefSection(uiState.latestWorkout) }
         item { AiReportBriefSection() }
     }
 }
@@ -187,7 +199,7 @@ private fun OverallLevelHeader(rank: String, streak: Int) {
 }
 
 @Composable
-private fun HealthBriefSection() {
+private fun HealthBriefSection(latest: HealthAssessmentEntity?) {
     PremiumGlassCard(modifier = Modifier.fillMaxWidth()) {
         Column(modifier = Modifier.padding(24.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
@@ -198,15 +210,21 @@ private fun HealthBriefSection() {
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                 Column {
                     Text("vital status", color = textmuted, fontSize = 11.sp)
-                    Text("--", color = textprimary, fontWeight = FontWeight.Bold, fontSize = 16.sp)
+                    val systolic = latest?.systolicBp
+                    val diastolic = latest?.diastolicBp
+                    Text(if(systolic != null) "$systolic/$diastolic" else "--", color = textprimary, fontWeight = FontWeight.Bold, fontSize = 16.sp)
+                }
+                Column {
+                    Text("weight", color = textmuted, fontSize = 11.sp)
+                    Text(latest?.weightKg?.let { "${it}kg" } ?: "--kg", color = textprimary, fontWeight = FontWeight.Bold, fontSize = 16.sp)
                 }
                 Column {
                     Text("body fat", color = textmuted, fontSize = 11.sp)
-                    Text("--%", color = textprimary, fontWeight = FontWeight.Bold, fontSize = 16.sp)
+                    Text(latest?.bodyFatPercentage?.let { "${it}%" } ?: "--%", color = textprimary, fontWeight = FontWeight.Bold, fontSize = 16.sp)
                 }
                 Column(horizontalAlignment = Alignment.End) {
                     Text("visceral fat", color = textmuted, fontSize = 11.sp)
-                    Text("Lvl --", color = textprimary, fontWeight = FontWeight.Bold, fontSize = 16.sp)
+                    Text(latest?.visceralFatLevel?.let { "Lvl $it" } ?: "Lvl --", color = textprimary, fontWeight = FontWeight.Bold, fontSize = 16.sp)
                 }
             }
         }
@@ -214,7 +232,7 @@ private fun HealthBriefSection() {
 }
 
 @Composable
-private fun NutritionBriefSection() {
+private fun NutritionBriefSection(totalCalories: Int) {
     PremiumGlassCard(modifier = Modifier.fillMaxWidth()) {
         Column(modifier = Modifier.padding(24.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
@@ -223,20 +241,12 @@ private fun NutritionBriefSection() {
                     Spacer(Modifier.width(12.dp))
                     Text("nutrition brief", color = textprimary, fontWeight = FontWeight.Bold, fontSize = 16.sp)
                 }
-                Text("Lv.--", color = statusgood, fontWeight = FontWeight.Bold, fontSize = 14.sp)
+                Text("Daily Goal", color = statusgood, fontWeight = FontWeight.Bold, fontSize = 14.sp)
             }
-            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceAround) {
+            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center) {
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Text("0/0g", color = textprimary, fontWeight = FontWeight.Bold, fontSize = 14.sp)
-                    Text("protein", color = textmuted, fontSize = 11.sp)
-                }
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Text("0/0g", color = textprimary, fontWeight = FontWeight.Bold, fontSize = 14.sp)
-                    Text("carbs", color = textmuted, fontSize = 11.sp)
-                }
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Text("0/0g", color = textprimary, fontWeight = FontWeight.Bold, fontSize = 14.sp)
-                    Text("fats", color = textmuted, fontSize = 11.sp)
+                    Text("$totalCalories kcal", color = textprimary, fontWeight = FontWeight.Bold, fontSize = 20.sp)
+                    Text("total intake today", color = textmuted, fontSize = 11.sp)
                 }
             }
         }
@@ -244,7 +254,7 @@ private fun NutritionBriefSection() {
 }
 
 @Composable
-private fun WorkoutBriefSection() {
+private fun WorkoutBriefSection(latest: WorkoutSessionEntity?) {
     PremiumGlassCard(modifier = Modifier.fillMaxWidth()) {
         Column(modifier = Modifier.padding(24.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
@@ -254,13 +264,13 @@ private fun WorkoutBriefSection() {
             }
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
                 Column {
-                    Text("last trained", color = textmuted, fontSize = 11.sp)
-                    Text("--", color = textprimary, fontWeight = FontWeight.Medium, fontSize = 15.sp)
+                    Text("last routine", color = textmuted, fontSize = 11.sp)
+                    Text(latest?.routineName ?: "--", color = textprimary, fontWeight = FontWeight.Medium, fontSize = 15.sp)
                 }
                 Box(modifier = Modifier.background(Color.White.copy(0.05f), RoundedCornerShape(8.dp)).padding(12.dp)) {
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        Text("recovery", color = textmuted, fontSize = 10.sp)
-                        Text("--%", color = textprimary, fontWeight = FontWeight.Bold, fontSize = 16.sp)
+                        Text("duration", color = textmuted, fontSize = 10.sp)
+                        Text(latest?.totalDurationMinutes?.let { "${it}m" } ?: "--m", color = textprimary, fontWeight = FontWeight.Bold, fontSize = 16.sp)
                     }
                 }
             }

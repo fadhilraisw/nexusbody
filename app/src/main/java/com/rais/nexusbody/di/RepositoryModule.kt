@@ -1,7 +1,11 @@
 package com.rais.nexusbody.di
 
+import com.rais.nexusbody.data.repository.HealthAssessmentRepositoryImpl
+import com.rais.nexusbody.data.repository.MedicationRepositoryImpl
 import com.rais.nexusbody.data.repository.NutritionRepositoryImpl
 import com.rais.nexusbody.data.repository.WorkoutRepositoryImpl
+import com.rais.nexusbody.domain.repository.HealthAssessmentRepository
+import com.rais.nexusbody.domain.repository.MedicationRepository
 import com.rais.nexusbody.domain.repository.NutritionRepository
 import com.rais.nexusbody.domain.repository.WorkoutRepository
 import dagger.Binds
@@ -25,4 +29,16 @@ abstract class RepositoryModule {
     abstract fun bindWorkoutRepository(
         workoutRepositoryImpl: WorkoutRepositoryImpl
     ): WorkoutRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindHealthAssessmentRepository(
+        healthAssessmentRepositoryImpl: HealthAssessmentRepositoryImpl
+    ): HealthAssessmentRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindMedicationRepository(
+        medicationRepositoryImpl: MedicationRepositoryImpl
+    ): MedicationRepository
 }

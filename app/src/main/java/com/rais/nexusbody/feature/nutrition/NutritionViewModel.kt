@@ -11,13 +11,19 @@ import com.rais.nexusbody.domain.model.NutritionGoal
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import java.util.UUID
+import java.util.Calendar
+import io.github.jan.supabase.SupabaseClient
+import io.github.jan.supabase.gotrue.auth
 import javax.inject.Inject
 
 
 data class NutritionUiState(
+    val isLoading: Boolean = false,
     val searchQuery: String = "",
     val searchResults: List<FoodProductDto> = emptyList(),
     val isSearching: Boolean = false,
@@ -25,6 +31,11 @@ data class NutritionUiState(
     val servingSizeGrams: String = "100",
     val mealTime: String = "12:00",
     val mealDate: String = "14/05/2026",
+    val todaysLogs: List<NutritionLogEntity> = emptyList(),
+    val currentCalories: Int = 0,
+    val currentProtein: Float = 0f,
+    val currentCarbs: Float = 0f,
+    val currentFat: Float = 0f,
     val goalHistory: List<NutritionGoal> = emptyList(),
     val activeGoal: NutritionGoal = NutritionGoal("1", System.currentTimeMillis(), 2400, 160, 250, 70, true)
 )
@@ -32,14 +43,52 @@ data class NutritionUiState(
 @HiltViewModel
 class NutritionViewModel @Inject constructor(
     private val foodApi: FoodApiService,
-    private val nutritionRepo: NutritionRepository // injeksi repo baru
+    private val nutritionRepo: NutritionRepository,
+    private val supabase: SupabaseClient
 ) : ViewModel() {
 
+    private val userId: String
+        get() = supabase.auth.currentUserOrNull()?.id ?: "anonymous_user"
+
     private val _state = MutableStateFlow(NutritionUiState())
-    val state: StateFlow<NutritionUiState> = _state.asStateFlow()
+    
+    val state: StateFlow<NutritionUiState> = combine(
+        _state,
+        nutritionRepo.getLogsByTimeframe(userId, getStartOfDay(), getEndOfDay())
+    ) { currentState, logs ->
+        currentState.copy(
+            todaysLogs = logs,
+            currentCalories = logs.sumOf { it.calories },
+            currentProtein = logs.sumOf { it.proteinGrams.toDouble() }.toFloat(),
+            currentCarbs = logs.sumOf { it.carbsGrams.toDouble() }.toFloat(),
+            currentFat = logs.sumOf { it.fatGrams.toDouble() }.toFloat()
+        )
+    }.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5000),
+        initialValue = NutritionUiState()
+    )
+
+    private fun getStartOfDay(): Long {
+        val cal = Calendar.getInstance()
+        cal.set(Calendar.HOUR_OF_DAY, 0)
+        cal.set(Calendar.MINUTE, 0)
+        cal.set(Calendar.SECOND, 0)
+        cal.set(Calendar.MILLISECOND, 0)
+        return cal.timeInMillis
+    }
+
+    private fun getEndOfDay(): Long {
+        val cal = Calendar.getInstance()
+        cal.set(Calendar.HOUR_OF_DAY, 23)
+        cal.set(Calendar.MINUTE, 59)
+        cal.set(Calendar.SECOND, 59)
+        cal.set(Calendar.MILLISECOND, 999)
+        return cal.timeInMillis
+    }
 
     fun updateSearchQuery(query: String) {
-        _state.value = _state.value.copy(searchQuery = query)
+        _state.value = _state.value.copy(searchQuery = query, selectedFood = null)
         if (query.length > 2) searchFood(query)
     }
 
@@ -82,7 +131,7 @@ class NutritionViewModel @Inject constructor(
 
         val newLog = NutritionLogEntity(
             id = UUID.randomUUID().toString(),
-            userId = "dummy_user_123", // data sementara sebelum modul login dibuat
+            userId = userId,
             timestamp = System.currentTimeMillis(),
             foodName = food.productName ?: "unknown",
             portionGrams = weight,
@@ -96,7 +145,13 @@ class NutritionViewModel @Inject constructor(
         viewModelScope.launch {
             nutritionRepo.insertLog(newLog)
             // reset ui setelah berhasil disimpan
-            _state.value = currentState.copy(selectedFood = null, searchQuery = "", servingSizeGrams = "100")
+            _state.value = _state.value.copy(selectedFood = null, searchQuery = "", servingSizeGrams = "100")
+        }
+    }
+
+    fun deleteLog(id: String) {
+        viewModelScope.launch {
+            nutritionRepo.deleteLog(id)
         }
     }
 

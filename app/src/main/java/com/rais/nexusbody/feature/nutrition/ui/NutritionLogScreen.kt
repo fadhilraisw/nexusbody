@@ -23,6 +23,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import com.rais.nexusbody.core.ui.components.PremiumGlassCard
 import com.rais.nexusbody.core.ui.components.PremiumTextField
 import com.rais.nexusbody.core.ui.theme.*
+import com.rais.nexusbody.data.local.entity.NutritionLogEntity
 import com.rais.nexusbody.feature.nutrition.NutritionViewModel
 import com.rais.nexusbody.domain.model.NutritionGoal
 import java.text.SimpleDateFormat
@@ -52,15 +53,26 @@ fun NutritionLogScreen(viewModel: NutritionViewModel = hiltViewModel()) {
                 MacroBudgetCard(
                     timeframe = selectedTimeframe,
                     activeGoal = state.activeGoal,
+                    currentCalories = state.currentCalories,
+                    currentProtein = state.currentProtein.toInt(),
+                    currentCarbs = state.currentCarbs.toInt(),
+                    currentFat = state.currentFat.toInt(),
                     onClick = { showGoalEditSheet = true }
                 )
             }
 
             item { Text("recent intake", color = textsecondary, fontSize = 14.sp, fontWeight = FontWeight.SemiBold) }
 
-            // data dikosongkan
-            item {
-                Text("belum ada log makanan tercatat. tekan '+' untuk mulai.", color = textmuted, fontSize = 12.sp)
+            if (state.todaysLogs.isEmpty()) {
+                item {
+                    Text("belum ada log makanan tercatat. tekan '+' untuk mulai.", color = textmuted, fontSize = 12.sp)
+                }
+            } else {
+                items(state.todaysLogs.reversed()) { log ->
+                    IntakeCard(log) {
+                        viewModel.deleteLog(log.id)
+                    }
+                }
             }
         }
 
@@ -95,23 +107,61 @@ fun NutritionLogScreen(viewModel: NutritionViewModel = hiltViewModel()) {
 }
 
 @Composable
-private fun MacroBudgetCard(timeframe: String, activeGoal: NutritionGoal, onClick: () -> Unit) {
+private fun MacroBudgetCard(
+    timeframe: String, 
+    activeGoal: NutritionGoal, 
+    currentCalories: Int,
+    currentProtein: Int,
+    currentCarbs: Int,
+    currentFat: Int,
+    onClick: () -> Unit
+) {
     PremiumGlassCard(modifier = Modifier.fillMaxWidth().clickable { onClick() }) {
         Column(modifier = Modifier.padding(24.dp), verticalArrangement = Arrangement.spacedBy(20.dp)) {
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
                 Column {
                     Text("current budget ($timeframe)", color = textmuted, fontSize = 12.sp)
-                    Text("0 / ${activeGoal.calorieTarget} kcal", color = statuswarning, fontWeight = FontWeight.ExtraBold, fontSize = 20.sp)
+                    Text("$currentCalories / ${activeGoal.calorieTarget} kcal", color = statuswarning, fontWeight = FontWeight.ExtraBold, fontSize = 20.sp)
                 }
                 Icon(Icons.Default.Edit, null, tint = premiumaccent, modifier = Modifier.size(18.dp))
             }
 
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                MacroBudgetBar("protein", 0, activeGoal.proteinTarget, statusgood)
-                MacroBudgetBar("carbs", 0, activeGoal.carbTarget, textprimary)
-                MacroBudgetBar("fats", 0, activeGoal.fatTarget, statusdanger)
+                MacroBudgetBar("protein", currentProtein, activeGoal.proteinTarget, statusgood)
+                MacroBudgetBar("carbs", currentCarbs, activeGoal.carbTarget, textprimary)
+                MacroBudgetBar("fats", currentFat, activeGoal.fatTarget, statusdanger)
             }
         }
+    }
+}
+
+@Composable
+private fun IntakeCard(log: NutritionLogEntity, onDelete: () -> Unit) {
+    PremiumGlassCard(modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp)) {
+        Row(modifier = Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
+            Column(Modifier.weight(1f)) {
+                Text(log.foodName, color = textprimary, fontWeight = FontWeight.Bold, fontSize = 15.sp)
+                Text("${log.portionGrams.toInt()}g · ${log.calories} kcal", color = textsecondary, fontSize = 12.sp)
+            }
+            Row(horizontalArrangement = Arrangement.spacedBy(12.dp), verticalAlignment = Alignment.CenterVertically) {
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    NutrientTinyBadge("P", log.proteinGrams.toInt().toString(), statusgood)
+                    NutrientTinyBadge("C", log.carbsGrams.toInt().toString(), textprimary)
+                    NutrientTinyBadge("F", log.fatGrams.toInt().toString(), statusdanger)
+                }
+                IconButton(onClick = onDelete, modifier = Modifier.size(24.dp)) {
+                    Icon(Icons.Default.Delete, null, tint = statusdanger.copy(alpha = 0.6f), modifier = Modifier.size(16.dp))
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun NutrientTinyBadge(label: String, value: String, color: Color) {
+    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+        Text(value, color = color, fontWeight = FontWeight.Bold, fontSize = 11.sp)
+        Text(label, color = textmuted, fontSize = 8.sp)
     }
 }
 
@@ -210,48 +260,71 @@ private fun TimeframeSelector(selected: String, onSelect: (String) -> Unit) {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun SmartNutritionForm(viewModel: NutritionViewModel, onDismiss: () -> Unit) {
-    var query by remember { mutableStateOf("") }
-    var showAiFallback by remember { mutableStateOf(false) }
+    val state by viewModel.state.collectAsState()
     var isManualMode by remember { mutableStateOf(false) }
-
+    
     var showDatePicker by remember { mutableStateOf(false) }
     var showTimePicker by remember { mutableStateOf(false) }
-    var selectedDate by remember { mutableStateOf("pilih tanggal") }
-    var selectedTime by remember { mutableStateOf("pilih jam") }
-
+    
     LazyColumn(contentPadding = PaddingValues(24.dp), verticalArrangement = Arrangement.spacedBy(20.dp)) {
-        item { Text("log konsumsi", color = textprimary, fontSize = 20.sp, fontWeight = FontWeight.Bold) }
+        item { 
+            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+                Text("log konsumsi", color = textprimary, fontSize = 20.sp, fontWeight = FontWeight.Bold)
+                if (isManualMode) {
+                    TextButton(onClick = { isManualMode = false }) { Text("cari database", color = premiumaccent) }
+                } else {
+                    TextButton(onClick = { isManualMode = true }) { Text("input manual/ai", color = premiumaccent) }
+                }
+            }
+        }
 
         item {
             Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                 Box(modifier = Modifier.weight(1f).clip(RoundedCornerShape(16.dp)).background(Color.White.copy(0.05f)).clickable { showDatePicker = true }.padding(16.dp)) {
-                    Text(selectedDate, color = textprimary, fontSize = 14.sp)
+                    Text(state.mealDate, color = textprimary, fontSize = 14.sp)
                 }
                 Box(modifier = Modifier.weight(1f).clip(RoundedCornerShape(16.dp)).background(Color.White.copy(0.05f)).clickable { showTimePicker = true }.padding(16.dp)) {
-                    Text(selectedTime, color = textprimary, fontSize = 14.sp)
+                    Text(state.mealTime, color = textprimary, fontSize = 14.sp)
                 }
             }
         }
 
         if (!isManualMode) {
             item {
-                PremiumTextField(value = query, onValueChange = { query = it; showAiFallback = it.isNotEmpty() }, label = "cari di database global...")
+                PremiumTextField(
+                    value = state.searchQuery, 
+                    onValueChange = { viewModel.updateSearchQuery(it) }, 
+                    label = "cari makanan (Indo/Global)..."
+                )
 
-                if (showAiFallback) {
-                    Spacer(Modifier.height(8.dp))
-                    Box(modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp)).background(Color.White.copy(0.02f))) {
+                if (state.isSearching) {
+                    LinearProgressIndicator(modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp), color = premiumaccent)
+                }
+
+                if (state.searchResults.isNotEmpty() && state.selectedFood == null) {
+                    PremiumGlassCard(modifier = Modifier.padding(top = 8.dp)) {
                         Column {
-                            Text("mencari '$query'...", color = textmuted, modifier = Modifier.padding(16.dp), fontSize = 12.sp)
-                            Divider(color = Color.White.copy(0.05f))
-                            Row(
-                                modifier = Modifier.fillMaxWidth().clickable { isManualMode = true }.padding(16.dp),
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Icon(Icons.Default.Star, null, tint = premiumaccent, modifier = Modifier.size(16.dp))
-                                Spacer(Modifier.width(8.dp))
-                                Text("tidak ada di database? analisa dengan ai", color = premiumaccent, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                            state.searchResults.take(5).forEach { food ->
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .clickable { viewModel.selectFood(food) }
+                                        .padding(16.dp),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Column(modifier = Modifier.weight(1f)) {
+                                        Text(food.productName ?: "Tanpa Nama", color = textprimary, fontWeight = FontWeight.Bold)
+                                        Text("Global Database", color = textmuted, fontSize = 11.sp)
+                                    }
+                                    Icon(Icons.Default.Add, null, tint = premiumaccent)
+                                }
+                                Divider(color = Color.White.copy(0.05f))
                             }
                         }
+                    }
+                } else if (state.searchQuery.length > 2 && !state.isSearching && state.searchResults.isEmpty() && state.selectedFood == null) {
+                    Box(modifier = Modifier.fillMaxWidth().padding(16.dp).clickable { isManualMode = true }, contentAlignment = Alignment.Center) {
+                        Text("data tidak ditemukan. klik untuk input manual/ai", color = premiumaccent, fontSize = 12.sp, fontWeight = FontWeight.Bold)
                     }
                 }
             }
@@ -261,25 +334,38 @@ private fun SmartNutritionForm(viewModel: NutritionViewModel, onDismiss: () -> U
             item {
                 PremiumGlassCard {
                     Column(modifier = Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
-                        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-                            Text("mode manual & ai", color = textprimary, fontWeight = FontWeight.Bold)
-                            TextButton(onClick = { isManualMode = false }) { Text("batal", color = textmuted) }
-                        }
-                        PremiumTextField(value = query, onValueChange = { query = it }, label = "nama makanan")
-                        PremiumTextField(value = "", onValueChange = {}, label = "porsi (gram / mangkuk)")
+                        Text("mode manual & ai (segera hadir)", color = statusgood, fontWeight = FontWeight.Bold)
+                        PremiumTextField(value = state.searchQuery, onValueChange = { viewModel.updateSearchQuery(it) }, label = "nama makanan")
+                        Text("fitur integrasi AI untuk melengkapi data otomatis akan tersedia di update berikutnya.", color = textmuted, fontSize = 11.sp)
+                    }
+                }
+            }
+        }
 
-                        Text("isi yang anda tahu, ai melengkapi sisanya:", color = premiumaccent, fontSize = 11.sp)
-                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                            PremiumTextField(value = "", onValueChange = {}, label = "kcal", modifier = Modifier.weight(1f))
-                            PremiumTextField(value = "", onValueChange = {}, label = "pro", modifier = Modifier.weight(1f))
-                            PremiumTextField(value = "", onValueChange = {}, label = "carb", modifier = Modifier.weight(1f))
-                            PremiumTextField(value = "", onValueChange = {}, label = "fat", modifier = Modifier.weight(1f))
+        state.selectedFood?.let { food ->
+            item {
+                PremiumGlassCard {
+                    Column(modifier = Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                        Text("Detail Nutrisi: ${food.productName}", color = premiumaccent, fontWeight = FontWeight.Bold)
+                        
+                        Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                            PremiumTextField(
+                                value = state.servingSizeGrams, 
+                                onValueChange = { viewModel.updateServingSize(it) }, 
+                                label = "Porsi (gram)", 
+                                modifier = Modifier.weight(1f)
+                            )
                         }
 
-                        Button(onClick = { }, colors = ButtonDefaults.buttonColors(containerColor = Color.White.copy(0.1f)), modifier = Modifier.fillMaxWidth()) {
-                            Icon(Icons.Default.Star, null, tint = premiumaccent, modifier = Modifier.size(16.dp))
-                            Spacer(Modifier.width(8.dp))
-                            Text("lengkapi data dengan ai", color = textprimary)
+                        val weight = state.servingSizeGrams.toFloatOrNull() ?: 100f
+                        val multiplier = weight / 100f
+                        val cals = ((food.nutriments?.energyKcal ?: 0f) * multiplier).toInt()
+                        
+                        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                            NutrientSmallInfo("Kcal", cals.toString())
+                            NutrientSmallInfo("Pro", String.format(Locale.getDefault(), "%.1fg", (food.nutriments?.proteins ?: 0f) * multiplier))
+                            NutrientSmallInfo("Carb", String.format(Locale.getDefault(), "%.1fg", (food.nutriments?.carbs ?: 0f) * multiplier))
+                            NutrientSmallInfo("Fat", String.format(Locale.getDefault(), "%.1fg", (food.nutriments?.fat ?: 0f) * multiplier))
                         }
                     }
                 }
@@ -287,7 +373,15 @@ private fun SmartNutritionForm(viewModel: NutritionViewModel, onDismiss: () -> U
         }
 
         item {
-            Button(onClick = onDismiss, modifier = Modifier.fillMaxWidth().height(50.dp), colors = ButtonDefaults.buttonColors(containerColor = statusgood)) {
+            Button(
+                onClick = { 
+                    viewModel.saveLog()
+                    onDismiss()
+                }, 
+                enabled = state.selectedFood != null,
+                modifier = Modifier.fillMaxWidth().height(50.dp), 
+                colors = ButtonDefaults.buttonColors(containerColor = statusgood)
+            ) {
                 Text("simpan log", color = Color.White, fontWeight = FontWeight.Bold)
             }
         }
@@ -297,7 +391,15 @@ private fun SmartNutritionForm(viewModel: NutritionViewModel, onDismiss: () -> U
         val datePickerState = rememberDatePickerState()
         DatePickerDialog(
             onDismissRequest = { showDatePicker = false },
-            confirmButton = { TextButton(onClick = { selectedDate = "terpilih"; showDatePicker = false }) { Text("ok") } }
+            confirmButton = { 
+                TextButton(onClick = { 
+                    val sdf = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault())
+                    val dateStr = datePickerState.selectedDateMillis?.let { sdf.format(Date(it)) } ?: state.mealDate
+                    viewModel.updateDateTime(state.mealTime, dateStr)
+                    showDatePicker = false 
+                }) { Text("OK", color = premiumaccent) } 
+            },
+            dismissButton = { TextButton(onClick = { showDatePicker = false }) { Text("BATAL") } }
         ) {
             DatePicker(state = datePickerState)
         }
@@ -307,8 +409,23 @@ private fun SmartNutritionForm(viewModel: NutritionViewModel, onDismiss: () -> U
         val timePickerState = rememberTimePickerState()
         AlertDialog(
             onDismissRequest = { showTimePicker = false },
-            confirmButton = { TextButton(onClick = { selectedTime = "${timePickerState.hour}:${timePickerState.minute}"; showTimePicker = false }) { Text("ok") } },
+            confirmButton = { 
+                TextButton(onClick = { 
+                    val timeStr = String.format("%02d:%02d", timePickerState.hour, timePickerState.minute)
+                    viewModel.updateDateTime(timeStr, state.mealDate)
+                    showTimePicker = false 
+                }) { Text("OK", color = premiumaccent) } 
+            },
+            dismissButton = { TextButton(onClick = { showTimePicker = false }) { Text("BATAL") } },
             text = { TimePicker(state = timePickerState) }
         )
+    }
+}
+
+@Composable
+private fun NutrientSmallInfo(label: String, value: String) {
+    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+        Text(value, color = textprimary, fontWeight = FontWeight.Bold, fontSize = 14.sp)
+        Text(label, color = textmuted, fontSize = 10.sp)
     }
 }
