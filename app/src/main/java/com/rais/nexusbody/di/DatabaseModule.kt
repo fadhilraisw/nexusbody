@@ -3,11 +3,7 @@ package com.rais.nexusbody.di
 import android.content.Context
 import androidx.room.Room
 import com.rais.nexusbody.core.database.NexusBodyDatabase
-import com.rais.nexusbody.data.local.dao.HealthDao
-import com.rais.nexusbody.data.local.dao.MedicationDao
-import com.rais.nexusbody.data.local.dao.NutritionDao
-import com.rais.nexusbody.data.local.dao.UserDao
-import com.rais.nexusbody.data.local.dao.WorkoutDao
+import com.rais.nexusbody.data.local.dao.*
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -43,4 +39,13 @@ object DatabaseModule {
 
     @Provides
     fun provideMedicationDao(database: NexusBodyDatabase): MedicationDao = database.medicationDao()
+
+    @Provides
+    fun provideQuestDao(database: NexusBodyDatabase): QuestDao = database.questDao()
+
+    @Provides
+    fun provideGamificationDao(database: NexusBodyDatabase): GamificationDao = database.gamificationDao()
+
+    @Provides
+    fun provideAiReportDao(database: NexusBodyDatabase): AiReportDao = database.aiReportDao()
 }

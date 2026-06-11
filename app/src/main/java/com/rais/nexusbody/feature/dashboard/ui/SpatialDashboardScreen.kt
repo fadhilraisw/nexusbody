@@ -32,44 +32,45 @@ import com.rais.nexusbody.data.local.entity.MedicationEntity
 import com.rais.nexusbody.data.local.entity.WorkoutSessionEntity
 import kotlinx.coroutines.launch
 
-val textprimary = Color(0xFFFFFFFF)
-val textsecondary = Color(0xB3FFFFFF)
-val textmuted = Color(0x80FFFFFF)
-val premiumaccent = Color(0xFFE65100)
-val statusgood = Color(0xFF34C759)
-val statuswarning = Color(0xFFFFCC00)
-val statusdanger = Color(0xFFFF3B30)
+// --- SKEMA WARNA PREMIUM NEXUS ---
+val textprimary = Color(0xFFFFFFFF) // Teks utama putih bersih
+val textsecondary = Color(0xB3FFFFFF) // Teks pendukung abu-abu terang
+val textmuted = Color(0x80FFFFFF) // Teks kecil/keterangan redup
+val premiumaccent = Color(0xFFE65100) // Warna identitas Oranye Deep
+val statusgood = Color(0xFF34C759) // Hijau indikator positif
+val statuswarning = Color(0xFFFFCC00) // Kuning indikator perhatian
+val statusdanger = Color(0xFFFF3B30) // Merah indikator bahaya
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SpatialDashboardScreen(
-    viewModel: DashboardViewModel = hiltViewModel(),
+    viewModel: DashboardViewModel = hiltViewModel(), // Ambil logika data dari ViewModel
     onNavigateToProfile: () -> Unit = {}
 ) {
+    // State UI untuk Drawer (Sidebar) dan Navigasi Internal Dashboard
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
-    val scope = rememberCoroutineScope()
-    var currentScreen by remember { mutableStateOf("dashboard") }
-    val uiState by viewModel.uiState.collectAsState()
+    val scope = rememberCoroutineScope() // Scope untuk memicu drawer buka/tutup
+    var currentScreen by remember { mutableStateOf("dashboard") } // State penanda layar aktif
+    val uiState by viewModel.uiState.collectAsState() // Observasi data database secara reaktif
 
+    // Komponen Drawer Utama
     ModalNavigationDrawer(
         drawerState = drawerState,
         drawerContent = {
             ModalDrawerSheet(
-                drawerContainerColor = Color(0xFF0D0F12),
+                drawerContainerColor = Color(0xFF0D0F12), // Background sidebar gelap pekat
                 drawerShape = RoundedCornerShape(0.dp),
                 modifier = Modifier.fillMaxHeight().width(280.dp)
             ) {
+                // Daftar Menu Navigasi
                 Column(modifier = Modifier.padding(32.dp)) {
                     Text("nexusbody", color = textprimary, fontSize = 24.sp, fontWeight = FontWeight.ExtraBold)
                     Text("v2.0 medical grade", color = textmuted, fontSize = 10.sp, letterSpacing = 2.sp)
                     Spacer(Modifier.height(48.dp))
+                    
                     val items = listOf(
-                        "dashboard" to "◈",
-                        "health" to "⚲",
-                        "nutrition" to "▦",
-                        "workout" to "⚡",
-                        "quest" to "🎯",
-                        "ai report" to "✦"
+                        "dashboard" to "◈", "health" to "⚲", "nutrition" to "▦",
+                        "workout" to "⚡", "quest" to "🎯", "ai report" to "✦"
                     )
                     items.forEach { (id, icon) ->
                         val isSelected = currentScreen == id
@@ -79,8 +80,8 @@ fun SpatialDashboardScreen(
                                 .clip(RoundedCornerShape(16.dp))
                                 .background(if (isSelected) Color.White.copy(0.05f) else Color.Transparent)
                                 .clickable {
-                                    currentScreen = id
-                                    scope.launch { drawerState.close() }
+                                    currentScreen = id // Ganti layar
+                                    scope.launch { drawerState.close() } // Tutup sidebar
                                 }
                                 .padding(16.dp),
                             verticalAlignment = Alignment.CenterVertically
@@ -94,31 +95,36 @@ fun SpatialDashboardScreen(
             }
         }
     ) {
+        // LAYAR KONTEN UTAMA
         Box(modifier = Modifier.fillMaxSize()) {
+            // Efek Background Spatial (Radial Gradient dinamis)
             Box(modifier = Modifier.fillMaxSize().background(Color(0xFF08090A)).drawBehind {
                 drawCircle(Brush.radialGradient(listOf(Color(0xFF1A2233), Color.Transparent)), radius = size.width, center = Offset(size.width * 0.2f, 0f))
                 drawCircle(Brush.radialGradient(listOf(Color(0xFF2E1E18), Color.Transparent)), radius = size.width, center = Offset(size.width, size.height))
             })
 
             Column(modifier = Modifier.fillMaxSize()) {
+                // Top Bar Navigasi
                 SpatialTopBar(
                     title = currentScreen,
                     onMenuClick = { scope.launch { drawerState.open() } }
                 )
 
+                // Indikator Loading Global (Hanya muncul saat inisialisasi awal)
                 if (uiState.isLoading) {
                     Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                         CircularProgressIndicator(color = premiumaccent)
                     }
                 } else {
+                    // SWITCHING SCREEN (Navigasi dalam satu layar Activity)
                     Crossfade(targetState = currentScreen, label = "screen_routing") { screen ->
                         when (screen) {
-                            "dashboard" -> DashboardContent(uiState)
-                            "health" -> HealthAssessmentScreen()
-                            "nutrition" -> NutritionLogScreen()
-                            "workout" -> WorkoutLogScreen()
-                            "quest" -> com.rais.nexusbody.feature.gamification.ui.QuestForgerScreen()
-                            "ai report" -> com.rais.nexusbody.feature.ai_report.ui.AiClinicalReportScreen()
+                            "dashboard" -> DashboardContent(uiState) // Ringkasan seluruh data
+                            "health" -> HealthAssessmentScreen() // Fitur Biomarker/PAGD
+                            "nutrition" -> NutritionLogScreen() // Fitur Log Makanan
+                            "workout" -> WorkoutLogScreen() // Fitur Latihan Otot
+                            "quest" -> com.rais.nexusbody.feature.gamification.ui.QuestForgerScreen() // Fitur Reward
+                            "ai report" -> com.rais.nexusbody.feature.ai_report.ui.AiClinicalReportScreen() // Fitur Analisa AI
                         }
                     }
                 }
@@ -127,6 +133,7 @@ fun SpatialDashboardScreen(
     }
 }
 
+// Komponen Konten Ringkasan di Dashboard Utama
 @Composable
 private fun DashboardContent(uiState: DashboardUiState) {
     LazyColumn(
@@ -134,9 +141,10 @@ private fun DashboardContent(uiState: DashboardUiState) {
         contentPadding = PaddingValues(20.dp, 12.dp, 20.dp, 120.dp),
         verticalArrangement = Arrangement.spacedBy(20.dp)
     ) {
+        // 1. Kartu Rank & XP
         item { OverallLevelHeader(uiState.rank, uiState.streak) }
 
-        // Medication Reminder Section
+        // 2. Kartu Medication Reminder (SINKRON DENGAN DATA HEALTH)
         item {
             val activeMeds = uiState.activeMedications
             PremiumGlassCard(modifier = Modifier.fillMaxWidth()) {
@@ -158,12 +166,18 @@ private fun DashboardContent(uiState: DashboardUiState) {
             }
         }
 
+        // 3. Ringkasan Klinis (Health Brief)
         item { HealthBriefSection(uiState.latestHealth) }
+        // 4. Ringkasan Nutrisi (Nutrition Brief)
         item { NutritionBriefSection(uiState.totalCalories) }
+        // 5. Ringkasan Latihan (Workout Brief)
         item { WorkoutBriefSection(uiState.latestWorkout) }
+        // 6. Slot untuk laporan AI
         item { AiReportBriefSection() }
     }
 }
+
+// --- SUB-KOMPONEN UI ---
 
 @Composable
 private fun SpatialTopBar(title: String, onMenuClick: () -> Unit) {
@@ -175,7 +189,7 @@ private fun SpatialTopBar(title: String, onMenuClick: () -> Unit) {
         IconButton(onClick = onMenuClick) {
             Text("≡", color = Color.White, fontSize = 28.sp, fontWeight = FontWeight.ExtraLight)
         }
-        Text(title, color = textsecondary, fontSize = 14.sp, fontWeight = FontWeight.SemiBold, letterSpacing = 2.sp)
+        Text(title.uppercase(), color = textsecondary, fontSize = 12.sp, fontWeight = FontWeight.SemiBold, letterSpacing = 2.sp)
         Box(modifier = Modifier.size(40.dp).clip(CircleShape).background(Color.White.copy(0.1f)).border(1.dp, Color.White.copy(0.1f), CircleShape), contentAlignment = Alignment.Center) {
             Text("R", color = Color.White, fontWeight = FontWeight.Bold)
         }
@@ -188,8 +202,8 @@ private fun OverallLevelHeader(rank: String, streak: Int) {
         Row(modifier = Modifier.padding(24.dp).fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
             Column {
                 Text("overall rank", color = textmuted, fontSize = 12.sp, letterSpacing = 1.sp)
-                Text("unranked", color = premiumaccent, fontWeight = FontWeight.ExtraBold, fontSize = 28.sp)
-                Text("0 day streak", color = textsecondary, fontSize = 12.sp)
+                Text(rank.uppercase(), color = premiumaccent, fontWeight = FontWeight.ExtraBold, fontSize = 28.sp)
+                Text("$streak day streak", color = textsecondary, fontSize = 12.sp)
             }
             Box(modifier = Modifier.size(64.dp).background(Color.White.copy(0.05f), CircleShape).border(1.dp, premiumaccent.copy(0.5f), CircleShape), contentAlignment = Alignment.Center) {
                 Text("🏆", fontSize = 32.sp)

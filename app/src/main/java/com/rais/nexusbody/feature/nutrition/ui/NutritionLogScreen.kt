@@ -33,6 +33,7 @@ import java.util.*
 @Composable
 fun NutritionLogScreen(viewModel: NutritionViewModel = hiltViewModel()) {
     val state by viewModel.state.collectAsState()
+    var activeSheet by remember { mutableStateOf("") }
     var showAddMealSheet by remember { mutableStateOf(false) }
     var showGoalEditSheet by remember { mutableStateOf(false) }
     var selectedTimeframe by remember { mutableStateOf("daily") }
@@ -47,7 +48,10 @@ fun NutritionLogScreen(viewModel: NutritionViewModel = hiltViewModel()) {
                 Text("▦ nutrition analytics", color = textprimary, fontSize = 24.sp, fontWeight = FontWeight.Bold)
             }
 
-            item { TimeframeSelector(selectedTimeframe) { selectedTimeframe = it } }
+            item { TimeframeSelector(selectedTimeframe) { 
+                selectedTimeframe = it 
+                viewModel.updateTimeframe(it)
+            } }
 
             item {
                 MacroBudgetCard(
@@ -69,9 +73,11 @@ fun NutritionLogScreen(viewModel: NutritionViewModel = hiltViewModel()) {
                 }
             } else {
                 items(state.todaysLogs.reversed()) { log ->
-                    IntakeCard(log) {
-                        viewModel.deleteLog(log.id)
-                    }
+                    IntakeCard(
+                        log = log,
+                        onDelete = { viewModel.deleteLog(log.id) },
+                        onClick = { activeSheet = "view_log_${log.id}" }
+                    )
                 }
             }
         }
@@ -101,6 +107,21 @@ fun NutritionLogScreen(viewModel: NutritionViewModel = hiltViewModel()) {
                 modifier = Modifier.fillMaxHeight(0.9f)
             ) {
                 SmartNutritionForm(viewModel) { showAddMealSheet = false }
+            }
+        }
+
+        if (activeSheet.isNotEmpty()) {
+            ModalBottomSheet(
+                onDismissRequest = { activeSheet = "" },
+                containerColor = Color(0xFF0D0F12)
+            ) {
+                if (activeSheet.startsWith("view_log_")) {
+                    val logId = activeSheet.removePrefix("view_log_")
+                    val log = state.todaysLogs.find { it.id == logId }
+                    if (log != null) {
+                        ViewNutritionDetailSheet(log) { activeSheet = "" }
+                    }
+                }
             }
         }
     }
@@ -136,8 +157,8 @@ private fun MacroBudgetCard(
 }
 
 @Composable
-private fun IntakeCard(log: NutritionLogEntity, onDelete: () -> Unit) {
-    PremiumGlassCard(modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp)) {
+private fun IntakeCard(log: NutritionLogEntity, onDelete: () -> Unit, onClick: () -> Unit) {
+    PremiumGlassCard(modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp).clickable { onClick() }) {
         Row(modifier = Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
             Column(Modifier.weight(1f)) {
                 Text(log.foodName, color = textprimary, fontWeight = FontWeight.Bold, fontSize = 15.sp)
@@ -154,6 +175,55 @@ private fun IntakeCard(log: NutritionLogEntity, onDelete: () -> Unit) {
                 }
             }
         }
+    }
+}
+
+@Composable
+private fun ViewNutritionDetailSheet(log: NutritionLogEntity, onDismiss: () -> Unit) {
+    val sdf = SimpleDateFormat("dd MMMM yyyy · HH:mm", Locale.getDefault())
+    LazyColumn(modifier = Modifier.padding(24.dp), verticalArrangement = Arrangement.spacedBy(20.dp)) {
+        item {
+            Column {
+                Text(log.foodName, color = textprimary, fontSize = 24.sp, fontWeight = FontWeight.Bold)
+                Text(sdf.format(Date(log.timestamp)), color = premiumaccent, fontSize = 13.sp)
+            }
+        }
+        item { Divider(color = Color.White.copy(0.05f)) }
+        item {
+            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                Column {
+                    Text("Porsi", color = textmuted, fontSize = 12.sp)
+                    Text("${log.portionGrams.toInt()} gram", color = textprimary, fontSize = 18.sp, fontWeight = FontWeight.Bold)
+                }
+                Column(horizontalAlignment = Alignment.End) {
+                    Text("Total Energi", color = textmuted, fontSize = 12.sp)
+                    Text("${log.calories} kcal", color = statuswarning, fontSize = 18.sp, fontWeight = FontWeight.Bold)
+                }
+            }
+        }
+        item {
+            PremiumGlassCard {
+                Row(modifier = Modifier.padding(20.dp).fillMaxWidth(), horizontalArrangement = Arrangement.SpaceAround) {
+                    DetailNutrientItem("Protein", "${log.proteinGrams}g", statusgood)
+                    DetailNutrientItem("Carbs", "${log.carbsGrams}g", textprimary)
+                    DetailNutrientItem("Fats", "${log.fatGrams}g", statusdanger)
+                }
+            }
+        }
+        item {
+            Button(onClick = onDismiss, modifier = Modifier.fillMaxWidth().height(50.dp), colors = ButtonDefaults.buttonColors(containerColor = Color.White.copy(0.1f))) {
+                Text("Tutup", color = textprimary)
+            }
+        }
+        item { Spacer(Modifier.height(40.dp)) }
+    }
+}
+
+@Composable
+private fun DetailNutrientItem(label: String, value: String, color: Color) {
+    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+        Text(value, color = color, fontWeight = FontWeight.Bold, fontSize = 16.sp)
+        Text(label, color = textmuted, fontSize = 11.sp)
     }
 }
 

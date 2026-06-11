@@ -10,7 +10,8 @@ data class WorkoutSessionEntity(
     val timestamp: Long,
     val routineName: String,
     val totalDurationMinutes: Int,
-    val clinicalNotes: String
+    val clinicalNotes: String,
+    val xpEarned: Int = 0 // Track XP earned per session
 )
 
 @Entity(tableName = "workout_exercises")

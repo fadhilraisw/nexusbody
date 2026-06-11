@@ -28,6 +28,8 @@ android {
 
         buildConfigField("String", "SUPABASE_URL", "\"${properties.getProperty("SUPABASE_URL", "")}\"")
         buildConfigField("String", "SUPABASE_ANON_KEY", "\"${properties.getProperty("SUPABASE_ANON_KEY", "")}\"")
+        buildConfigField("String", "GEMINI_API_KEY", "\"${properties.getProperty("GEMINI_API_KEY", "")}\"")
+        buildConfigField("String", "GROQ_API_KEY", "\"${properties.getProperty("GROQ_API_KEY", "")}\"")
     }
 
     compileOptions {
@@ -57,6 +59,11 @@ dependencies {
     ksp(libs.hilt.compiler)
     implementation(libs.hilt.navigation.compose)
     implementation(libs.androidx.navigation.compose)
+
+    // AI
+    implementation("com.google.ai.client.generativeai:generativeai:0.7.0")
+    implementation("com.squareup.retrofit2:retrofit:2.11.0")
+    implementation("com.squareup.retrofit2:converter-gson:2.11.0")
 
     // library nexusbody
     implementation("com.j256.ormlite:ormlite-android:6.1")

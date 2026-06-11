@@ -1,13 +1,7 @@
 package com.rais.nexusbody.di
 
-import com.rais.nexusbody.data.repository.HealthAssessmentRepositoryImpl
-import com.rais.nexusbody.data.repository.MedicationRepositoryImpl
-import com.rais.nexusbody.data.repository.NutritionRepositoryImpl
-import com.rais.nexusbody.data.repository.WorkoutRepositoryImpl
-import com.rais.nexusbody.domain.repository.HealthAssessmentRepository
-import com.rais.nexusbody.domain.repository.MedicationRepository
-import com.rais.nexusbody.domain.repository.NutritionRepository
-import com.rais.nexusbody.domain.repository.WorkoutRepository
+import com.rais.nexusbody.data.repository.*
+import com.rais.nexusbody.domain.repository.*
 import dagger.Binds
 import dagger.Module
 import dagger.hilt.InstallIn
@@ -41,4 +35,22 @@ abstract class RepositoryModule {
     abstract fun bindMedicationRepository(
         medicationRepositoryImpl: MedicationRepositoryImpl
     ): MedicationRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindQuestRepository(
+        questRepositoryImpl: QuestRepositoryImpl
+    ): QuestRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindGamificationRepository(
+        gamificationRepositoryImpl: GamificationRepositoryImpl
+    ): GamificationRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindAiReportRepository(
+        aiReportRepositoryImpl: AiReportRepositoryImpl
+    ): AiReportRepository
 }

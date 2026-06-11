@@ -17,17 +17,18 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.hilt.navigation.compose.hiltViewModel
 import com.rais.nexusbody.core.ui.components.PremiumGlassCard
 import com.rais.nexusbody.core.ui.components.PremiumTextField
 import com.rais.nexusbody.core.ui.theme.*
+import com.rais.nexusbody.feature.gamification.QuestViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun QuestForgerScreen() {
+fun QuestForgerScreen(viewModel: QuestViewModel = hiltViewModel()) {
+    val quests by viewModel.activeQuests.collectAsState()
+    val profile by viewModel.profile.collectAsState()
     var showForgeSheet by remember { mutableStateOf(false) }
-
-    // data dikosongkan
-    val quests = emptyList<Map<String, String>>()
 
     Box(modifier = Modifier.fillMaxSize()) {
         LazyColumn(contentPadding = PaddingValues(20.dp, 20.dp, 20.dp, 120.dp), verticalArrangement = Arrangement.spacedBy(20.dp)) {
@@ -41,11 +42,11 @@ fun QuestForgerScreen() {
                     Row(modifier = Modifier.padding(24.dp).fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
                         Column {
                             Text("current tier", color = textmuted, fontSize = 12.sp)
-                            Text("elite vanguard", color = premiumaccent, fontWeight = FontWeight.ExtraBold, fontSize = 20.sp)
+                            Text(profile?.overallRank ?: "Bronze I", color = premiumaccent, fontWeight = FontWeight.ExtraBold, fontSize = 20.sp)
                         }
                         Column(horizontalAlignment = Alignment.End) {
-                            Text("total xp", color = textmuted, fontSize = 12.sp)
-                            Text("0", color = textprimary, fontWeight = FontWeight.Bold, fontSize = 20.sp)
+                            Text("total nutrition xp", color = textmuted, fontSize = 12.sp)
+                            Text("${profile?.totalNutritionXp ?: 0}", color = textprimary, fontWeight = FontWeight.Bold, fontSize = 20.sp)
                         }
                     }
                 }
@@ -58,12 +59,12 @@ fun QuestForgerScreen() {
             } else {
                 items(quests) { quest ->
                     PremiumGlassCard(modifier = Modifier.fillMaxWidth()) {
-                        Row(modifier = Modifier.padding(20.dp).fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+                        Row(modifier = Modifier.padding(24.dp).fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
                             Column {
-                                Text(quest["title"]!!, color = textprimary, fontWeight = FontWeight.Bold, fontSize = 16.sp)
-                                Text("trigger: ${quest["cond"]}", color = statuswarning, fontSize = 12.sp)
+                                Text(quest.title, color = textprimary, fontWeight = FontWeight.Bold, fontSize = 16.sp)
+                                Text("trigger: ${quest.variable} ${quest.operator} ${quest.targetValue}", color = statuswarning, fontSize = 12.sp)
                             }
-                            Text("+${quest["xp"]} xp", color = statusgood, fontWeight = FontWeight.Bold)
+                            Text("+${quest.xpReward} xp", color = statusgood, fontWeight = FontWeight.Bold)
                         }
                     }
                 }
@@ -80,14 +81,17 @@ fun QuestForgerScreen() {
 
         if (showForgeSheet) {
             ModalBottomSheet(onDismissRequest = { showForgeSheet = false }, containerColor = Color(0xFF0D0F12)) {
-                ForgeQuestForm { showForgeSheet = false }
+                ForgeQuestForm(onAdd = { title, module, variable, operator, target, xp ->
+                    viewModel.createQuest(title, module, variable, operator, target, xp)
+                    showForgeSheet = false
+                }, onDismiss = { showForgeSheet = false })
             }
         }
     }
 }
 
 @Composable
-private fun ForgeQuestForm(onDismiss: () -> Unit) {
+private fun ForgeQuestForm(onAdd: (String, String, String, String, Float, Int) -> Unit, onDismiss: () -> Unit) {
     var title by remember { mutableStateOf("") }
     var module by remember { mutableStateOf("nutrition") }
     var variable by remember { mutableStateOf("") }
@@ -117,7 +121,9 @@ private fun ForgeQuestForm(onDismiss: () -> Unit) {
         }
         item { PremiumTextField(value = xp, onValueChange = { xp = it }, label = "xp reward") }
         item {
-            Button(onClick = onDismiss, modifier = Modifier.fillMaxWidth().height(50.dp), colors = ButtonDefaults.buttonColors(containerColor = statusgood)) {
+            Button(onClick = {
+                onAdd(title, module, variable, operator, target.toFloatOrNull() ?: 0f, xp.toIntOrNull() ?: 0)
+            }, modifier = Modifier.fillMaxWidth().height(50.dp), colors = ButtonDefaults.buttonColors(containerColor = statusgood)) {
                 Text("aktifkan quest", fontWeight = FontWeight.Bold, color = Color.White)
             }
         }

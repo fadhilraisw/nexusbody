@@ -17,6 +17,7 @@ data class HealthAssessmentEntity(
     val diastolicBp: Int?,
     val restingHeartRate: Int?,
     val sleepDurationHours: Float?,
+    val conditions: List<String> = emptyList(), // Tambahkan kolom conditions
     val weightKg: Float? = null,
     val heightCm: Float? = null,
     val lilaCm: Float? = null,

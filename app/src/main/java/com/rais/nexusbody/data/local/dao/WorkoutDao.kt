@@ -29,6 +29,9 @@ interface WorkoutDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertExercises(exercises: List<WorkoutExerciseEntity>)
 
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertExercise(exercise: WorkoutExerciseEntity)
+
     // mengambil sesi beserta seluruh gerakannya secara otomatis
     @Transaction
     @Query("SELECT * FROM workout_sessions WHERE userId = :userId ORDER BY timestamp DESC")

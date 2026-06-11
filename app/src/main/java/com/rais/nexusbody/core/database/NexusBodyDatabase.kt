@@ -14,9 +14,12 @@ import com.rais.nexusbody.data.local.entity.*
         NutritionLogEntity::class,
         WorkoutSessionEntity::class,
         WorkoutExerciseEntity::class,
-        MedicationEntity::class
+        MedicationEntity::class,
+        QuestEntity::class,
+        GamificationProfileEntity::class,
+        AiReportEntity::class
     ],
-    version = 5,
+    version = 9,
     exportSchema = false
 )
 @TypeConverters(Converters::class)
@@ -26,4 +29,7 @@ abstract class NexusBodyDatabase : RoomDatabase() {
     abstract fun nutritionDao(): NutritionDao
     abstract fun workoutDao(): WorkoutDao
     abstract fun medicationDao(): MedicationDao
+    abstract fun questDao(): QuestDao
+    abstract fun gamificationDao(): GamificationDao
+    abstract fun aiReportDao(): AiReportDao
 }

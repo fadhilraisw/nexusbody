@@ -9,7 +9,6 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
-import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -29,13 +28,13 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Favorite
+import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.DatePicker
 import androidx.compose.material3.DatePickerDialog
 import androidx.compose.material3.DateRangePicker
-import androidx.compose.material3.rememberDateRangePickerState
 import androidx.compose.material3.Divider
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -45,6 +44,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TimePicker
 import androidx.compose.material3.rememberDatePickerState
+import androidx.compose.material3.rememberDateRangePickerState
 import androidx.compose.material3.rememberTimePickerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -69,9 +69,9 @@ import com.rais.nexusbody.core.ui.theme.textprimary
 import com.rais.nexusbody.core.ui.theme.textsecondary
 import com.rais.nexusbody.domain.model.Medication
 import java.text.SimpleDateFormat
-import java.util.UUID
 import java.util.Date
 import java.util.Locale
+import java.util.UUID
 import androidx.compose.runtime.collectAsState
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.rais.nexusbody.feature.health.HealthViewModel
@@ -95,12 +95,12 @@ fun HealthAssessmentScreen(
     val assessments by viewModel.assessments.collectAsState()
     val medications by viewModel.medications.collectAsState()
     val latestAssessment = assessments.firstOrNull()
+    val conditions = latestAssessment?.conditions ?: emptyList()
 
     var activeSheet by remember { mutableStateOf("") }
     var selectedTimeframe by remember { mutableStateOf("daily") }
 
     // State Dinamis (Sekarang diambil dari ViewModel/Repo)
-    var conditions by remember { mutableStateOf(emptyList<String>()) }
     var medicalRecords by remember { mutableStateOf(emptyList<MedicalRecord>()) }
 
     Box(modifier = Modifier.fillMaxSize()) {
@@ -113,7 +113,10 @@ fun HealthAssessmentScreen(
                 Text("⚲ clinical tracking", color = textprimary, fontSize = 24.sp, fontWeight = FontWeight.Bold)
             }
 
-            item { HealthTimeframeSelector(selectedTimeframe) { selectedTimeframe = it } }
+            item { HealthTimeframeSelector(selectedTimeframe) { 
+                selectedTimeframe = it 
+                viewModel.updateTimeframe(it)
+            } }
 
             // 1. Section: Active Conditions
             item {
@@ -199,7 +202,8 @@ fun HealthAssessmentScreen(
                 items(medicalRecords) { record ->
                     MedicalRecordCard(
                         record = record,
-                        onDelete = { medicalRecords = medicalRecords.filter { it.id != record.id } }
+                        onDelete = { medicalRecords = medicalRecords.filter { it.id != record.id } },
+                        onClick = { activeSheet = "view_record_${record.id}" }
                     )
                 }
             }
@@ -216,7 +220,11 @@ fun HealthAssessmentScreen(
                     "antro" -> AntropometriForm(viewModel) { activeSheet = "" }
                     "bio" -> BiokimiaForm(viewModel) { activeSheet = "" }
                     "fisik" -> FisikKlinisForm(viewModel) { activeSheet = "" }
-                    "conditions" -> EditConditionsForm(conditions, onUpdate = { conditions = it }, onDismiss = { activeSheet = "" })
+                    "conditions" -> EditConditionsForm(
+                        currentConditions = conditions, 
+                        onUpdate = { viewModel.updateConditions(it) }, 
+                        onDismiss = { activeSheet = "" }
+                    )
                     "vitals" -> UpdateVitalsContent(viewModel) { activeSheet = "" }
                     "add_med" -> AddMedicationForm { newMed ->
                         viewModel.saveMedication(newMed)
@@ -263,6 +271,12 @@ fun HealthAssessmentScreen(
                                     },
                                     onDismiss = { activeSheet = "" }
                                 )
+                            }
+                        } else if (activeSheet.startsWith("view_record_")) {
+                            val recordId = activeSheet.removePrefix("view_record_")
+                            val record = medicalRecords.find { it.id == recordId }
+                            if (record != null) {
+                                ViewMedicalRecordDetailSheet(record) { activeSheet = "" }
                             }
                         }
                     }
@@ -408,8 +422,8 @@ private fun PagdQuickButton(label: String, modifier: Modifier, onClick: () -> Un
 }
 
 @Composable
-private fun MedicalRecordCard(record: MedicalRecord, onDelete: () -> Unit) {
-    PremiumGlassCard(modifier = Modifier.fillMaxWidth().padding(bottom = 4.dp)) {
+private fun MedicalRecordCard(record: MedicalRecord, onDelete: () -> Unit, onClick: () -> Unit) {
+    PremiumGlassCard(modifier = Modifier.fillMaxWidth().padding(bottom = 4.dp).clickable { onClick() }) {
         Column(modifier = Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
                 Text(record.doctor, color = premiumaccent, fontWeight = FontWeight.Bold, fontSize = 14.sp)
@@ -437,7 +451,7 @@ private fun MedicationCard(med: Medication, onDelete: () -> Unit, onClick: () ->
         "Mulai: ${sdf.format(Date(med.startDate))}"
     }
 
-    PremiumGlassCard(modifier = Modifier.fillMaxWidth().clickable { onClick() }) {
+    PremiumGlassCard(modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp).clickable { onClick() }) {
         Row(modifier = Modifier.padding(20.dp), verticalAlignment = Alignment.CenterVertically) {
             Column(Modifier.weight(1f)) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
@@ -932,5 +946,36 @@ private fun AddMedicalRecordForm(onAdd: (MedicalRecord) -> Unit) {
         ) {
             DatePicker(state = datePickerState)
         }
+    }
+}
+
+@Composable
+private fun ViewMedicalRecordDetailSheet(record: MedicalRecord, onDismiss: () -> Unit) {
+    LazyColumn(modifier = Modifier.padding(24.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
+        item {
+            Column {
+                Text(record.doctor, color = premiumaccent, fontSize = 24.sp, fontWeight = FontWeight.Bold)
+                Text(record.date, color = textsecondary, fontSize = 14.sp)
+            }
+        }
+        item { Divider(color = Color.White.copy(0.05f)) }
+        item {
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Text("Diagnosa:", color = textmuted, fontSize = 12.sp)
+                Text(record.diagnosis, color = textprimary, fontSize = 18.sp, fontWeight = FontWeight.SemiBold)
+            }
+        }
+        item {
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Text("Catatan/Resep:", color = textmuted, fontSize = 12.sp)
+                Text(record.notes, color = textsecondary, fontSize = 14.sp, lineHeight = 22.sp)
+            }
+        }
+        item {
+            Button(onClick = onDismiss, modifier = Modifier.fillMaxWidth().height(50.dp), colors = ButtonDefaults.buttonColors(containerColor = Color.White.copy(0.1f))) {
+                Text("Tutup", color = textprimary)
+            }
+        }
+        item { Spacer(Modifier.height(40.dp)) }
     }
 }
