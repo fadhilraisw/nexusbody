@@ -1,25 +1,29 @@
 package com.rais.nexusbody.feature.onboarding.ui
 
-import androidx.compose.foundation.layout.*
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
-import com.rais.nexusbody.core.ui.theme.textprimary
-import com.rais.nexusbody.core.ui.theme.textsecondary
+import androidx.compose.foundation.layout.Box // UI: Kontainer dasar
+import androidx.compose.foundation.layout.fillMaxSize // UI: Penuhi layar
+import androidx.compose.material3.Text // UI: Komponen teks
+import androidx.compose.runtime.Composable // Penanda fungsi UI deklaratif
+import androidx.compose.ui.Alignment // UI: Posisi sentral
+import androidx.compose.ui.Modifier // UI: Modifikator visual
+import com.rais.nexusbody.core.ui.theme.textprimary // Theme: Warna teks identitas
 
+/**
+ * ONBOARDING HEALTH ASSESSMENT SCREEN (ONBOARDING UTILITY)
+ * Peran: Layar pengumpulan data medis awal bagi pengguna baru.
+ * Status: Terintegrasi dalam alur navigasi Onboarding (Pre-Dashboard).
+ */
 @Composable
 fun OnboardingHealthAssessmentScreen() {
-    Column(
-        modifier = Modifier.fillMaxSize().padding(24.dp),
-        verticalArrangement = Arrangement.Center,
-        horizontalAlignment = Alignment.CenterHorizontally
+    // Kontainer penampung visual utama
+    Box(
+        modifier = Modifier.fillMaxSize(), // Menutupi seluruh layar yang tersedia
+        contentAlignment = Alignment.Center // Memastikan konten berada di titik tengah
     ) {
-        Text("📋 inisialisasi rekam medis", color = textprimary, fontSize = 20.sp, fontWeight = FontWeight.Bold)
-        Spacer(modifier = Modifier.height(8.dp))
-        Text("form pagd untuk user baru", color = textsecondary, fontSize = 14.sp)
+        // Teks informasi status modul (Placeholder)
+        Text(
+            text = "Pre-Assessment Module", 
+            color = textprimary // Menggunakan skema warna standar NexusBody
+        )
     }
 }

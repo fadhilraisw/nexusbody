@@ -1,34 +1,49 @@
 package com.rais.nexusbody.domain.model
 
-import java.util.Date
+import java.util.Date // Objek waktu Java
 
-enum class SmokingStatus { NEVER, FORMER, CURRENT_LIGHT, CURRENT_HEAVY }
-
-data class BiochemicalData(
-    val fastingBloodGlucoseMgDl: Float? = null,
-    val hba1cPercent: Float? = null,
-    val totalCholesterolMgDl: Float? = null,
-    val ldlMgDl: Float? = null,
-    val hdlMgDl: Float? = null,
-    val triglyceridesMgDl: Float? = null,
-    val uricAcidMgDl: Float? = null,
-    val systolicBpMmHg: Int? = null,
-    val diastolicBpMmHg: Int? = null,
-    val hemoglobinGdL: Float? = null
+/**
+ * HEALTH ASSESSMENT DOMAIN MODEL
+ * Peran: Model data murni untuk merepresentasikan status kesehatan user di layer logika.
+ * Kenapa di Domain? Agar logika bisnis tidak tergantung pada framework database (Room).
+ */
+data class HealthAssessment(
+    val id: String, // Identitas unik universal
+    val userId: String, // Kepemilikan data
+    val metrics: com.rais.nexusbody.domain.model.BiochemicalMetrics, // Kumpulan hasil lab
+    val vitals: com.rais.nexusbody.domain.model.VitalSigns, // Kumpulan tanda vital (tensi/hr)
+    val bodyComp: com.rais.nexusbody.domain.model.BodyComposition, // Komposisi tubuh (lemak/berat)
+    val assessmentTime: Date, // Waktu pengambilan data
+    val healthScore: Int, // Skor kesehatan hasil kalkulasi (0-100)
+    val notes: String?, // Catatan klinis tambahan
+    val createdAt: Date // Waktu pembuatan record
 )
 
-data class HealthAssessment(
-    val id: String,
-    val userId: String,
-    val hasHypertension: Boolean,
-    val hasDiabetes: Boolean,
-    val hasGout: Boolean,
-    val hasGerd: Boolean,
-    val injuries: List<String>,           // e.g. ["lower_back_pain", "left_knee_injury"]
-    val allergies: List<String>,          // e.g. ["shellfish", "peanuts", "lactose"]
-    val sleepHoursPerNight: Float,
-    val smokingStatus: com.rais.nexusbody.domain.model.SmokingStatus,
-    val biochemicalData: com.rais.nexusbody.domain.model.BiochemicalData,
-    val notes: String?,
-    val timestamp: Date
+// Sub-model untuk pengorganisasian data yang lebih rapi (Modular)
+
+data class BiochemicalMetrics(
+    val bloodSugarMgDl: Float?,
+    val cholesterolMgDl: Float?,
+    val hdlMgDl: Float?,
+    val ldlMgDl: Float?,
+    val sgotUl: Float?,
+    val sgptUl: Float?,
+    val creatinineMgDl: Float?,
+    val egfr: Float?
+)
+
+data class VitalSigns(
+    val systolicBp: Int?,
+    val diastolicBp: Int?,
+    val heartRateBpm: Int?,
+    val bodyTempCelsius: Float?,
+    val respiratoryRate: Int?
+)
+
+data class BodyComposition(
+    val weightKg: Float,
+    val heightCm: Float,
+    val bodyFatPercentage: Float?,
+    val skeletalMuscleMassKg: Float?,
+    val visceralFatLevel: Int?
 )

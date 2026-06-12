@@ -30,16 +30,8 @@ import com.rais.nexusbody.feature.health.ui.HealthAssessmentScreen
 import com.rais.nexusbody.data.local.entity.HealthAssessmentEntity
 import com.rais.nexusbody.data.local.entity.MedicationEntity
 import com.rais.nexusbody.data.local.entity.WorkoutSessionEntity
+import com.rais.nexusbody.core.ui.theme.* // Impor konstanta warna global
 import kotlinx.coroutines.launch
-
-// --- SKEMA WARNA PREMIUM NEXUS ---
-val textprimary = Color(0xFFFFFFFF) // Teks utama putih bersih
-val textsecondary = Color(0xB3FFFFFF) // Teks pendukung abu-abu terang
-val textmuted = Color(0x80FFFFFF) // Teks kecil/keterangan redup
-val premiumaccent = Color(0xFFE65100) // Warna identitas Oranye Deep
-val statusgood = Color(0xFF34C759) // Hijau indikator positif
-val statuswarning = Color(0xFFFFCC00) // Kuning indikator perhatian
-val statusdanger = Color(0xFFFF3B30) // Merah indikator bahaya
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

@@ -1,36 +1,29 @@
-// File: app/src/main/java/com/rais/nexusbody/domain/model/GamificationProfile.kt
 package com.rais.nexusbody.domain.model
 
-import java.util.Date
-
-data class MuscleLevel(
-    val muscle: com.rais.nexusbody.domain.model.TargetMuscle,
-    val level: Int,
-    val currentXp: Int,
-    val xpToNextLevel: Int,
-    val totalXpEarned: Int,
-    val lastTrainedAt: Date?
-) {
-    val progressPercent: Float
-        get() = (currentXp.toFloat() / xpToNextLevel.toFloat()).coerceIn(0f, 1f)
-}
-
+/**
+ * GAMIFICATION DOMAIN MODEL
+ * Peran: Data pencapaian dan kemahiran otot user.
+ */
 data class GamificationProfile(
-    val id: String,
     val userId: String,
-    val totalNutritionXp: Int,
-    val dailyDietStreak: Int,
-    val longestDietStreak: Int,
-    val muscleLevels: Map<com.rais.nexusbody.domain.model.TargetMuscle, com.rais.nexusbody.domain.model.MuscleLevel>,
-    val agilityLevel: Int,
-    val agilityXp: Int,
-    val strengthLevel: Int,
-    val strengthXp: Int,
-    val enduranceLevel: Int,
-    val enduranceXp: Int,
-    val overallRank: String,
-    val totalWorkoutsCompleted: Int,
-    val totalNutritionLogsSubmitted: Int,
-    val createdAt: Date,
-    val updatedAt: Date
+    val totalXp: Int, // Total XP akumulatif
+    val rank: String, // Nama Rank (Bronze, Silver, Platinum, dll)
+    val currentStreak: Int, // Berapa hari berturut-turut aktif
+    
+    // XP spesifik per kelompok otot (Muscle Mastery)
+    val chestXp: Int = 0,
+    val backUpperXp: Int = 0,
+    val backLowerXp: Int = 0,
+    val bicepsXp: Int = 0,
+    val tricepsXp: Int = 0,
+    val shouldersXp: Int = 0,
+    val quadricepsXp: Int = 0,
+    val hamstringsXp: Int = 0,
+    val calvesXp: Int = 0,
+    val coreAbsXp: Int = 0,
+    val glutesXp: Int = 0,
+    
+    // XP kategori nutrisi dan kesehatan
+    val totalNutritionXp: Int = 0,
+    val totalHealthXp: Int = 0
 )

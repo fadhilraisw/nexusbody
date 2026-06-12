@@ -4,21 +4,7 @@ package com.rais.nexusbody.feature.health.ui
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.ExperimentalLayoutApi
-import androidx.compose.foundation.layout.FlowRow
-import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxHeight
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
@@ -29,28 +15,8 @@ import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.Notifications
-import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.DatePicker
-import androidx.compose.material3.DatePickerDialog
-import androidx.compose.material3.DateRangePicker
-import androidx.compose.material3.Divider
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.ModalBottomSheet
-import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
-import androidx.compose.material3.TimePicker
-import androidx.compose.material3.rememberDatePickerState
-import androidx.compose.material3.rememberDateRangePickerState
-import androidx.compose.material3.rememberTimePickerState
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -60,13 +26,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.rais.nexusbody.core.ui.components.PremiumGlassCard
 import com.rais.nexusbody.core.ui.components.PremiumTextField
-import com.rais.nexusbody.core.ui.theme.premiumaccent
-import com.rais.nexusbody.core.ui.theme.statusdanger
-import com.rais.nexusbody.core.ui.theme.statusgood
-import com.rais.nexusbody.core.ui.theme.statuswarning
-import com.rais.nexusbody.core.ui.theme.textmuted
-import com.rais.nexusbody.core.ui.theme.textprimary
-import com.rais.nexusbody.core.ui.theme.textsecondary
+import com.rais.nexusbody.core.ui.theme.*
 import com.rais.nexusbody.domain.model.Medication
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -87,6 +47,11 @@ data class MedicalRecord(
     val notes: String
 )
 
+/**
+ * HEALTH ASSESSMENT SCREEN (FEATURE LAYER - UI)
+ * Peran: Layar utama untuk pemantauan klinis, input lab (PAGD), dan jadwal obat.
+ * Logic Flow: User Input -> HealthViewModel -> Repository -> Room -> Supabase Sync.
+ */
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
 fun HealthAssessmentScreen(
@@ -239,7 +204,6 @@ fun HealthAssessmentScreen(
                             val medId = activeSheet.removePrefix("med_detail_")
                             val medEntity = medications.find { it.id == medId }
                             if (medEntity != null) {
-                                // Konversi Entity ke Model untuk UI Detail
                                 val med = Medication(
                                     id = medEntity.id,
                                     name = medEntity.name,
@@ -254,10 +218,9 @@ fun HealthAssessmentScreen(
                                 MedicationDetailSheet(
                                     med = med,
                                     onUpdate = { updatedMed ->
-                                        // Update via ViewModel
                                         val updatedEntity = MedicationEntity(
                                             id = updatedMed.id,
-                                            userId = medEntity.userId, // Tetap gunakan user ID asli
+                                            userId = medEntity.userId,
                                             name = updatedMed.name,
                                             dosage = updatedMed.dosage,
                                             frequency = updatedMed.frequency,
@@ -293,7 +256,7 @@ fun HealthAssessmentScreen(
 private fun FlowRowConditions(conditions: List<String>) {
     FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
         conditions.forEach { condition ->
-            val isDanger = condition.contains("alergi") || condition.contains("cedera")
+            val isDanger = condition.lowercase().contains("alergi") || condition.lowercase().contains("cedera")
             val color = if (isDanger) statusdanger else statuswarning
             Box(modifier = Modifier.background(color.copy(alpha = 0.15f), RoundedCornerShape(8.dp)).border(1.dp, color.copy(alpha = 0.5f), RoundedCornerShape(8.dp)).padding(horizontal = 12.dp, vertical = 6.dp)) {
                 Text(condition, color = color, fontSize = 11.sp, fontWeight = FontWeight.Bold)

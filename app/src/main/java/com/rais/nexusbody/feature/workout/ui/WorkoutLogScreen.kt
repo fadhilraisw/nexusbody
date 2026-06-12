@@ -34,6 +34,11 @@ import java.util.UUID
 
 data class ExerciseLog(val id: String, val name: String, val muscles: Set<String>, val sets: String, val reps: String, val weight: String, val duration: String)
 
+/**
+ * WORKOUT LOG SCREEN (UI LAYER)
+ * Peran: Manajemen riwayat latihan dan sistem bonus XP Muscle Mastery.
+ * Logic: User Input -> WorkoutViewModel -> Parallel Persistence (Room & Supabase).
+ */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun WorkoutLogScreen(viewModel: WorkoutViewModel = hiltViewModel()) {

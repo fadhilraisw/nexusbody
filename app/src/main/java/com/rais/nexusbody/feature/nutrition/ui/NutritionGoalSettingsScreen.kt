@@ -1,98 +1,106 @@
 package com.rais.nexusbody.feature.nutrition.ui
 
-import com.rais.nexusbody.domain.model.NutritionGoal
-import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
-import com.rais.nexusbody.core.ui.components.PremiumGlassCard
-import com.rais.nexusbody.core.ui.components.PremiumTextField
-import com.rais.nexusbody.core.ui.theme.*
-import com.rais.nexusbody.feature.nutrition.NutritionViewModel
-import java.text.SimpleDateFormat
-import java.util.*
+import androidx.compose.foundation.layout.* // UI: Tata letak
+import androidx.compose.foundation.lazy.LazyColumn // UI: List vertikal
+import androidx.compose.foundation.lazy.items // UI: Iterasi list
+import androidx.compose.material.icons.Icons // UI: Ikon
+import androidx.compose.material.icons.filled.Delete // UI: Ikon hapus
+import androidx.compose.material3.* // UI Framework: Material 3
+import androidx.compose.runtime.* // UI State: Variabel reaktif
+import androidx.compose.ui.Alignment // UI: Perataan
+import androidx.compose.ui.Modifier // UI: Properti visual
+import androidx.compose.ui.graphics.Color // UI: Warna
+import androidx.compose.ui.text.font.FontWeight // UI: Ketebalan font
+import androidx.compose.ui.unit.dp // UI: Ukuran pixel
+import androidx.compose.ui.unit.sp // UI: Ukuran teks
+import com.rais.nexusbody.core.ui.components.PremiumGlassCard // UI Shared: Kartu kaca
+import com.rais.nexusbody.core.ui.components.PremiumTextField // UI Shared: Input premium
+import com.rais.nexusbody.core.ui.theme.* // UI Theme: Warna global
+import com.rais.nexusbody.feature.nutrition.NutritionViewModel // Logic: Otak gizi
+import com.rais.nexusbody.domain.model.NutritionGoal // Model: Target gizi harian
+import java.text.SimpleDateFormat // Utils: Format tanggal
+import java.util.Date // Utils: Objek waktu
+import java.util.Locale // Utils: Lokalisasi
 
+/**
+ * NUTRITION GOAL SETTINGS SCREEN (FEATURE LAYER)
+ * Peran: Layar untuk mengatur target makro (Kalori, Protein, Karbo, Lemak) harian user.
+ * Alur: Input Target -> ViewModel Update -> Repository Save -> UI Reactive Update.
+ */
 @Composable
-fun NutritionGoalSettingsScreen(viewModel: NutritionViewModel, onBack: () -> Unit) {
-    val state by viewModel.state.collectAsState()
-
-    var newCal by remember { mutableStateOf("") }
-    var newPro by remember { mutableStateOf("") }
-    var newCarb by remember { mutableStateOf("") }
-    var newFat by remember { mutableStateOf("") }
+fun NutritionGoalSettingsScreen(
+    viewModel: NutritionViewModel, // Injeksi logika dari parent screen
+    onDismiss: () -> Unit // Callback untuk menutup pop-up
+) {
+    // Observasi state gizi saat ini dari database
+    val uiState by viewModel.state.collectAsState()
+    
+    // State lokal untuk menampung input form sementara
+    var cal by remember { mutableStateOf(uiState.activeGoal.calorieTarget.toString()) }
+    var pro by remember { mutableStateOf(uiState.activeGoal.proteinTarget.toString()) }
+    var carb by remember { mutableStateOf(uiState.activeGoal.carbTarget.toString()) }
+    var fat by remember { mutableStateOf(uiState.activeGoal.fatTarget.toString()) }
 
     LazyColumn(
-        contentPadding = PaddingValues(20.dp),
-        verticalArrangement = Arrangement.spacedBy(20.dp),
-        modifier = Modifier.fillMaxSize()
+        modifier = Modifier.padding(24.dp),
+        verticalArrangement = Arrangement.spacedBy(20.dp)
     ) {
+        // HEADER FORM
+        item { Text("🎯 set daily nutritional target", color = textprimary, fontSize = 20.sp, fontWeight = FontWeight.Bold) }
+        
+        // INPUT FIELD: KALORI
+        item { PremiumTextField(value = cal, onValueChange = { cal = it }, label = "calorie target (kcal)") }
+        
+        // INPUT FIELD: MAKRONUTRISI (Baris Sejajar)
         item {
-            Text("⚙️ budget configuration", color = textprimary, fontSize = 22.sp, fontWeight = FontWeight.Bold)
-            Text("setel target harian terbaru anda", color = textsecondary, fontSize = 12.sp)
-        }
-
-        // form input target baru
-        item {
-            PremiumGlassCard {
-                Column(modifier = Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
-                    Text("konfigurasi target aktif", color = premiumaccent, fontSize = 14.sp, fontWeight = FontWeight.Bold)
-                    PremiumTextField(value = newCal, onValueChange = { newCal = it }, label = "target kalori (kcal)")
-                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        PremiumTextField(value = newPro, onValueChange = { newPro = it }, label = "pro (g)", modifier = Modifier.weight(1f))
-                        PremiumTextField(value = newCarb, onValueChange = { newCarb = it }, label = "carb (g)", modifier = Modifier.weight(1f))
-                        PremiumTextField(value = newFat, onValueChange = { newFat = it }, label = "fat (g)", modifier = Modifier.weight(1f))
-                    }
-                    Button(
-                        onClick = { viewModel.updateDailyGoal(newCal.toInt(), newPro.toInt(), newCarb.toInt(), newFat.toInt()) },
-                        modifier = Modifier.fillMaxWidth(),
-                        colors = ButtonDefaults.buttonColors(containerColor = statusgood)
-                    ) {
-                        Text("aktifkan target baru", fontWeight = FontWeight.Bold)
-                    }
-                }
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                PremiumTextField(value = pro, onValueChange = { pro = it }, label = "protein (g)", modifier = Modifier.weight(1f))
+                PremiumTextField(value = carb, onValueChange = { carb = it }, label = "carbs (g)", modifier = Modifier.weight(1f))
+                PremiumTextField(value = fat, onValueChange = { fat = it }, label = "fats (g)", modifier = Modifier.weight(1f))
             }
         }
 
+        // TOMBOL AKSI: SIMPAN
         item {
-            Divider(color = Color.White.copy(0.05f))
-            Spacer(Modifier.height(8.dp))
-            Text("riwayat target", color = textprimary, fontSize = 16.sp, fontWeight = FontWeight.Bold)
+            Button(
+                onClick = { 
+                    // Kirim data baru ke ViewModel untuk diproses secara asinkron
+                    viewModel.updateDailyGoal(cal.toIntOrNull() ?: 0, pro.toIntOrNull() ?: 0, carb.toIntOrNull() ?: 0, fat.toIntOrNull() ?: 0)
+                    onDismiss() 
+                },
+                modifier = Modifier.fillMaxWidth().height(50.dp),
+                colors = ButtonDefaults.buttonColors(containerColor = statusgood)
+            ) {
+                Text("update daily budget", fontWeight = FontWeight.Bold)
+            }
         }
 
-        // list riwayat target (per card)
-        items(state.goalHistory) { goal ->
-            GoalHistoryCard(goal = goal, onDelete = { viewModel.deleteGoalHistory(goal.id) })
+        // SEKSI RIWAYAT TARGET (HISTORICAL TRACKING)
+        item { Text("previous targets", color = textprimary, fontSize = 14.sp, fontWeight = FontWeight.SemiBold, modifier = Modifier.padding(top = 12.dp)) }
+        
+        // Iterasi daftar target lama dari database
+        items(uiState.goalHistory.reversed()) { goal ->
+            GoalHistoryCard(goal) { viewModel.deleteGoalHistory(goal.id) }
         }
     }
 }
 
+/**
+ * GOAL HISTORY CARD (UI COMPONENT)
+ * Menampilkan ringkasan target lama dalam format kartu premium.
+ */
 @Composable
-fun GoalHistoryCard(goal: NutritionGoal, onDelete: () -> Unit) {
+private fun GoalHistoryCard(goal: NutritionGoal, onDelete: () -> Unit) {
     val sdf = SimpleDateFormat("dd MMM yyyy", Locale.getDefault())
     PremiumGlassCard(modifier = Modifier.fillMaxWidth()) {
-        Row(
-            modifier = Modifier.padding(16.dp).fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Column(modifier = Modifier.weight(1f)) {
+        Row(modifier = Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween) {
+            Column {
                 Text(sdf.format(Date(goal.dateSet)), color = textmuted, fontSize = 11.sp)
-                Text("${goal.calorieTarget} kcal", color = textprimary, fontWeight = FontWeight.Bold, fontSize = 16.sp)
-                Text("p: ${goal.proteinTarget}g | c: ${goal.carbTarget}g | f: ${goal.fatTarget}g", color = textsecondary, fontSize = 12.sp)
+                Text("${goal.calorieTarget} kcal", color = textprimary, fontWeight = FontWeight.Bold, fontSize = 15.sp)
+                Text("P:${goal.proteinTarget}g C:${goal.carbTarget}g F:${goal.fatTarget}g", color = textsecondary, fontSize = 12.sp)
             }
             IconButton(onClick = onDelete) {
-                Icon(Icons.Default.Delete, contentDescription = null, tint = statusdanger.copy(alpha = 0.6f))
+                Icon(Icons.Default.Delete, null, tint = statusdanger.copy(alpha = 0.6f))
             }
         }
     }

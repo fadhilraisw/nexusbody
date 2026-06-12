@@ -1,19 +1,28 @@
 package com.rais.nexusbody.core.util
 
-import android.database.SQLException
-import kotlinx.coroutines.CoroutineDispatcher
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
+import kotlinx.coroutines.CoroutineDispatcher // Pengatur thread
+import kotlinx.coroutines.Dispatchers // Thread IO/Main/Default
+import kotlinx.coroutines.withContext // Berpindah thread aman
+import android.database.SQLException // Pengecualian database SQL
 
+/**
+ * SAFE DATABASE CALL WRAPPER
+ * Peran: Menangani error database secara terpusat agar aplikasi tidak crash saat query gagal.
+ * Departemen: Back-End (Infrastructure Support).
+ * Alur: ViewModel -> SafeDbCall -> Room DAO.
+ */
 suspend fun <T> safeDbCall(
-    dispatcher: CoroutineDispatcher = Dispatchers.IO,
-    dbCall: suspend () -> T
+    dispatcher: CoroutineDispatcher = Dispatchers.IO, // Gunakan thread IO (Input-Output) secara default
+    dbCall: suspend () -> T // Blok kode database yang akan dieksekusi
 ): Result<T> = withContext(dispatcher) {
     try {
+        // Coba jalankan perintah database
         Result.Success(dbCall.invoke())
-    } catch (e: SQLException) {
-        Result.Error(e, "Database transaction failed.")
-    } catch (e: Exception) {
-        Result.Error(e, "An unexpected error occurred.")
+    } catch (throwable: Throwable) {
+        // Tangkap jika terjadi kegagalan SQL mentah atau error lainnya
+        when (throwable) {
+            is SQLException -> Result.Error(throwable, "operasi database gagal.")
+            else -> Result.Error(throwable, "kesalahan tak terduga saat akses database.")
+        }
     }
 }

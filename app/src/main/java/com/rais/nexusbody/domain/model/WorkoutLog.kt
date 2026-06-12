@@ -1,43 +1,28 @@
 package com.rais.nexusbody.domain.model
 
-import java.util.Date
+/**
+ * WORKOUT DOMAIN MODELS
+ * Peran: Definisi struktur data latihan di layer logika bisnis.
+ */
 
-enum class MovementType {
-    COMPOUND_PUSH, COMPOUND_PULL, COMPOUND_LEGS,
-    ISOLATION_UPPER, ISOLATION_LOWER,
-    CARDIO_STEADY_STATE, CARDIO_HIIT,
-    MOBILITY, FLEXIBILITY, SPORT_SPECIFIC
-}
-
-enum class TargetMuscle {
-    CHEST, BACK_UPPER, BACK_LOWER, SHOULDERS,
-    BICEPS, TRICEPS, FOREARMS,
-    QUADRICEPS, HAMSTRINGS, GLUTES, CALVES,
-    CORE_ABS, CORE_OBLIQUES, CORE_LOWER_BACK,
-    FULL_BODY, CARDIOVASCULAR, AGILITY
-}
-
-data class WorkoutSet(
-    val setNumber: Int,
-    val reps: Int?,
-    val weightKg: Float?,
-    val durationSeconds: Int?,     // for timed sets / cardio
-    val restSeconds: Int?,
-    val rpe: Float?,               // Rate of Perceived Exertion 1-10
-    val notes: String?
-)
-
-data class WorkoutLog(
+// Sesi Latihan Utama
+data class WorkoutSession(
     val id: String,
     val userId: String,
-    val movementType: com.rais.nexusbody.domain.model.MovementType,
-    val targetMuscle: com.rais.nexusbody.domain.model.TargetMuscle,
-    val exerciseName: String,
-    val durationMinutes: Int,
-    val sets: List<com.rais.nexusbody.domain.model.WorkoutSet>,
-    val totalVolumeTonnage: Float,  // sum of (weight * reps) across all sets
-    val workoutTime: Date,
-    val xpEarned: Int,
-    val notes: String?,
-    val createdAt: Date
+    val timestamp: Long,
+    val routineName: String, // Nama Rutinitas (misal: Push Day)
+    val totalDurationMinutes: Int,
+    val xpEarned: Int, // Hadiah XP yang didapat dari sesi ini
+    val clinicalNotes: String? // Catatan kondisi fisik saat latihan
+)
+
+// Detail Gerakan dalam satu Sesi
+data class WorkoutExercise(
+    val id: String,
+    val sessionId: String, // Relasi ke Sesi
+    val exerciseName: String, // Nama Gerakan (misal: Bench Press)
+    val targetMuscles: List<String>, // Kelompok Otot (CHEST, BICEPS, dll)
+    val sets: Int,
+    val reps: Int,
+    val weightKg: Float
 )

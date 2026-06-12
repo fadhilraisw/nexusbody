@@ -29,6 +29,11 @@ import com.rais.nexusbody.domain.model.NutritionGoal
 import java.text.SimpleDateFormat
 import java.util.*
 
+/**
+ * NUTRITION LOG SCREEN (UI LAYER)
+ * Peran: Manajemen asupan gizi harian dengan integrasi API pencarian makanan global.
+ * Logic: User Input -> ViewModel -> Repository -> Room -> Supabase.
+ */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun NutritionLogScreen(viewModel: NutritionViewModel = hiltViewModel()) {

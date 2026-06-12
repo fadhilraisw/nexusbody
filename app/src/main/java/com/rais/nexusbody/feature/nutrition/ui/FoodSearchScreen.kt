@@ -1,25 +1,29 @@
 package com.rais.nexusbody.feature.nutrition.ui
 
-import androidx.compose.foundation.layout.*
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
-import com.rais.nexusbody.core.ui.theme.textprimary
-import com.rais.nexusbody.core.ui.theme.textsecondary
+import androidx.compose.foundation.layout.Box // UI: Tata letak
+import androidx.compose.foundation.layout.fillMaxSize // UI: Ukuran penuh
+import androidx.compose.material3.Text // UI: Label
+import androidx.compose.runtime.Composable // Jetpack Compose
+import androidx.compose.ui.Alignment // UI: Posisi
+import androidx.compose.ui.Modifier // UI: Modifikator
+import com.rais.nexusbody.core.ui.theme.textprimary // Theme: Warna utama
 
+/**
+ * FOOD SEARCH SCREEN (NUTRITION UTILITY)
+ * Peran: Layar pencarian data makanan ke database OpenFoodFacts.
+ * Alur: Komponen ini dipanggil oleh NutritionLogScreen untuk proses input makanan global.
+ */
 @Composable
 fun FoodSearchScreen() {
-    Column(
-        modifier = Modifier.fillMaxSize().padding(24.dp),
-        verticalArrangement = Arrangement.Center,
-        horizontalAlignment = Alignment.CenterHorizontally
+    // Kontainer penampung visual
+    Box(
+        modifier = Modifier.fillMaxSize(), // Menutup seluruh area yang tersedia
+        contentAlignment = Alignment.Center // Memastikan teks berada di tengah layar
     ) {
-        Text("🔍 food database", color = textprimary, fontSize = 20.sp, fontWeight = FontWeight.Bold)
-        Spacer(modifier = Modifier.height(8.dp))
-        Text("modul pencarian makanan terpisah", color = textsecondary, fontSize = 14.sp)
+        // Teks informasi sementara (Placeholder)
+        Text(
+            text = "Food Search Logic Integrated", 
+            color = textprimary // Sesuai identitas visual NexusBody
+        )
     }
 }

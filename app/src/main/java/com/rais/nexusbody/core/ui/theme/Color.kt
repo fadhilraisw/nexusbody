@@ -1,20 +1,27 @@
 package com.rais.nexusbody.core.ui.theme
 
-import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Color // Objek warna Jetpack Compose
 
-// warna dasar elegan
-val spatialblack = Color(0xFF050505)
-val premiumaccent = Color(0xFFE65100) // oranye premium default
+/**
+ * NEXUS BODY PALETTE SYSTEM
+ * Peran: Definisi warna identitas aplikasi (Brand Colors).
+ * UX: Skema warna gelap premium yang dioptimalkan untuk visibilitas data medis di malam hari.
+ */
 
-// warna semantik medis
-val statusgood = Color(0xFF34C759) // hijau ios
-val statuswarning = Color(0xFFFFCC00) // kuning ios
-val statusdanger = Color(0xFFFF3B30) // merah ios
+// --- Warna Dasar ---
+val Purple80 = Color(0xFFD0BCFF)
+val PurpleGrey80 = Color(0xFFCCC2DC)
+val Pink80 = Color(0xFFEFB8C8)
 
-// kaca & teks
-val glasssurface = Color(0x1AFFFFFF) // kaca terang
-val glasssurfacedark = Color(0xE6121212) // kaca gelap pekat untuk popup agar teks tidak bocor
-val glassborder = Color(0x33FFFFFF)
-val textprimary = Color(0xFFFFFFFF)
-val textsecondary = Color(0xB3FFFFFF)
-val textmuted = Color(0x80FFFFFF)
+val Purple40 = Color(0xFF6650a4)
+val PurpleGrey40 = Color(0xFF625b71)
+val Pink40 = Color(0xFF7D5260)
+
+// --- Warna Kustom NexusBody (Premium Edition) ---
+val NeonViolet = Color(0xFF9D00FF) // Warna aksen utama
+val DeepSpace = Color(0xFF08090A) // Latar belakang hitam pekat
+val GlassWhite = Color(0x1AFFFFFF) // Warna lapisan kaca (Glassmorphism)
+val MedicalCyan = Color(0xFF00E5FF) // Warna elemen klinis
+val BloodRed = Color(0xFFFF3B30) // Indikator bahaya/out-of-range
+val GrowthGreen = Color(0xFF34C759) // Indikator progres positif
+val GoldAura = Color(0xFFFFD700) // Indikator rank/leveling

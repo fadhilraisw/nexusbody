@@ -1,38 +1,32 @@
 package com.rais.nexusbody.domain.model
 
-import java.util.Date
-
-enum class NutritionItemType { WHOLE_FOOD, SUPPLEMENT, BEVERAGE, SNACK, MEAL_PLAN_ITEM }
-
-data class MacroNutrients(
-    val proteinGrams: Float,
-    val carbohydratesGrams: Float,
-    val fatsGrams: Float,
-    val fiberGrams: Float,
-    val sugarGrams: Float,
-    val sodiumMg: Float
-)
-
+/**
+ * NUTRITION LOG DOMAIN MODEL
+ * Peran: Representasi data asupan makanan di layer logika bisnis.
+ */
 data class NutritionLog(
-    val id: String,
-    val userId: String,
-    val itemType: com.rais.nexusbody.domain.model.NutritionItemType,
-    val itemName: String,
-    val servingSizeGrams: Float,
-    val calories: Float,
-    val macros: com.rais.nexusbody.domain.model.MacroNutrients,
-    val consumptionTime: Date,
-    val mealLabel: String?,              // "Breakfast", "Lunch", "Dinner", "Snack"
-    val xpEarned: Int,
-    val createdAt: Date
+    val id: String, // ID Unik
+    val userId: String, // ID Pemilik
+    val foodName: String, // Nama Makanan
+    val calories: Int, // Total Kalori
+    val proteinGrams: Float, // Gram Protein
+    val carbsGrams: Float, // Gram Karbo
+    val fatGrams: Float, // Gram Lemak
+    val portionGrams: Float, // Berat Porsi
+    val timestamp: Long, // Waktu Makan
+    val isAiEstimated: Boolean = false // Apakah data hasil input manual atau tebakan AI
 )
 
+/**
+ * NUTRITION GOAL DOMAIN MODEL
+ * Peran: Target gizi harian yang ditetapkan user.
+ */
 data class NutritionGoal(
     val id: String,
-    val dateSet: Long,
+    val dateSet: Long, // Waktu target ditetapkan
     val calorieTarget: Int,
     val proteinTarget: Int,
     val carbTarget: Int,
     val fatTarget: Int,
-    val isActive: Boolean = false
+    val isActive: Boolean = true // Apakah ini target yang sedang berjalan
 )
